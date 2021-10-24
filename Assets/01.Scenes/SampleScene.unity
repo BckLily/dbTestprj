@@ -949,7 +949,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dataText: {fileID: 717193985}
   classUrl: 
+  allClassUrl: 
   weaponUrl: 
+  resourcePath: 
+  jsonPath: 
 --- !u!1 &1941362553
 GameObject:
   m_ObjectHideFlags: 0

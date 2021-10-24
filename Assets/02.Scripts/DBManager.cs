@@ -18,15 +18,18 @@ public class DBManager : MonoBehaviour
     [Header("Test Data")]
     public Text dataText;
 
-
     [Header("PHP URL String")]
     public string classUrl;
     public string allClassUrl;
     public string weaponUrl;
+    public string allWeaponUrl;
 
     [Header("File Path")]
     public string resourcePath;
     public string jsonPath;
+    public string classPath;
+    public string weaponPath;
+
 
 
     private void Awake()
@@ -49,12 +52,15 @@ public class DBManager : MonoBehaviour
         classUrl = "127.0.0.1/Unity/Class.php";
         allClassUrl = "127.0.0.1/Unity/AllClass.php";
         weaponUrl = "127.0.0.1/Unity/Weapon.php";
+        allWeaponUrl = "127.0.0.1/Unity/AllWeapon.php";
 
         resourcePath = "/Resources/";
         jsonPath = "JSON/";
+        classPath = "Class/";
+        weaponPath = "Weapon/";
 
         StartCoroutine(GetAllClassCo());
-
+        StartCoroutine(GetAllWeaponCo());
     }
 
 
@@ -143,7 +149,7 @@ public class DBManager : MonoBehaviour
     // 플레이어의 직업을 받으면 그 직업에 관련된 Dictionary 데이터를 반환
     public Dictionary<string, string> GetClassInfo(ePlayerClass playerClass)
     {
-        string jsonString = File.ReadAllText(Application.dataPath + resourcePath + jsonPath + playerClass.ToString() + ".json");
+        string jsonString = File.ReadAllText(Application.dataPath + resourcePath + jsonPath + classPath + playerClass.ToString() + ".json");
         JsonData classData = JsonMapper.ToObject(jsonString);
 
         Debug.Log(classData["ClassName"].ToString());
@@ -184,6 +190,7 @@ public class DBManager : MonoBehaviour
         }
     }
 
+
     private void GetAllClassJson(string _jsonData)
     {
         // 입력받은 데이터를 Parsing 하는 단계
@@ -214,7 +221,7 @@ public class DBManager : MonoBehaviour
                 string fileName = arrayData[i]["ClassName"].Value;
                 JsonData classJson = JsonMapper.ToJson(classDic);
 
-                File.WriteAllText(Application.dataPath + resourcePath + jsonPath + fileName + ".json", classJson.ToString());
+                File.WriteAllText(Application.dataPath + resourcePath + jsonPath + classPath + fileName + ".json", classJson.ToString());
                 classDic.Clear();
             }
         }
@@ -222,8 +229,88 @@ public class DBManager : MonoBehaviour
         {
             Debug.Log("없는 직업입니다.");
         }
-
     }
+
+
+    public Dictionary<string, string> GetWeaponInfo(string _weaponUID)
+    {
+        string jsonString = File.ReadAllText(Application.dataPath + resourcePath + jsonPath + weaponPath + _weaponUID.ToString() + ".json");
+        JsonData weaponData = JsonMapper.ToObject(jsonString);
+
+        Debug.Log(weaponData["Weapon_UID"].ToString());
+
+        Dictionary<string, string> _weaponDict = new Dictionary<string, string>();
+
+        _weaponDict.Add("Weapon_UID", weaponData["Weapon_UID"].ToString());
+        _weaponDict.Add("Weapon_Name", weaponData["Weapon_Name"].ToString());
+        _weaponDict.Add("Weapon_Damage", weaponData["Weapon_Damage"].ToString());
+        _weaponDict.Add("Weapon_AttackSpeed", weaponData["Weapon_AttackSpeed"].ToString());
+        _weaponDict.Add("Weapon_AttackDistance", weaponData["Weapon_AttackDistance"].ToString());
+        _weaponDict.Add("Weapon_ReloadBullet", weaponData["Weapon_ReloadBullet"].ToString());
+        _weaponDict.Add("Weapon_CarryBullet", weaponData["Weapon_CarryBullet"].ToString());
+        _weaponDict.Add("Weapon_ReloadTime", weaponData["Weapon_ReloadTime"].ToString());
+        _weaponDict.Add("Weapon_AttackRange", weaponData["Weapon_AttackRange"].ToString());
+
+        return _weaponDict;
+    }
+
+    IEnumerator GetAllWeaponCo()
+    {
+        // POST 방식의 요청
+        WWWForm form = new WWWForm();
+
+        // classUrl(php)에 form 값을 넘겨준다.
+        WWW webRequest = new WWW(allWeaponUrl, form);
+
+        yield return webRequest;
+
+        // classUrl로 넘겨준 값에 error가 반환이 되는 것이 아니면
+        if (string.IsNullOrEmpty(webRequest.error))
+        {
+            // 실행
+            GetAllWeaponJson(webRequest.text);
+        }
+    }
+
+    private void GetAllWeaponJson(string _jsonData)
+    {
+        // 입력받은 데이터를 Parsing 하는 단계
+        var parseData = JSON.Parse(_jsonData);
+        // {"results":[]} 형태의 파일
+        var arrayData = parseData["results"];
+        // []와 같이 데이터만 남는다.
+
+        Dictionary<string, string> weaponDict = new Dictionary<string, string>();
+
+        // 개수가 0개보다 많을 경우
+        if (arrayData.Count > 0)
+        {
+            for (int i = 0; i < arrayData.Count; i++)
+            {
+                weaponDict.Add("Weapon_UID", arrayData[i]["Weapon_UID"].Value);
+                weaponDict.Add("Weapon_Name", arrayData[i]["Weapon_Name"].Value);
+                weaponDict.Add("Weapon_Damage", arrayData[i]["Weapon_Damage"].Value);
+                weaponDict.Add("Weapon_AttackSpeed", arrayData[i]["Weapon_AttackSpeed"].Value);
+                weaponDict.Add("Weapon_AttackDistance", arrayData[i]["Weapon_AttackDistance"].Value);
+                weaponDict.Add("Weapon_ReloadBullet", arrayData[i]["Weapon_ReloadBullet"].Value);
+                weaponDict.Add("Weapon_CarryBullet", arrayData[i]["Weapon_CarryBullet"].Value);
+                weaponDict.Add("Weapon_ReloadTime", arrayData[i]["Weapon_ReloadTime"].Value);
+                weaponDict.Add("Weapon_AttackRange", arrayData[i]["Weapon_AttackRange"].Value);
+
+                string fileName = arrayData[i]["Weapon_UID"].Value;
+                JsonData classJson = JsonMapper.ToJson(weaponDict);
+
+                File.WriteAllText(Application.dataPath + resourcePath + jsonPath + weaponPath + fileName + ".json", classJson.ToString());
+                weaponDict.Clear();
+            }
+        }
+        else
+        {
+            Debug.Log("무기 데이터가 없습니다.");
+        }
+    }
+
+
     #endregion
 
 
